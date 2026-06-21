@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Time Perception Study</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <button id="theme-toggle" class="icon-button" aria-label="Dark Mode wechseln">
+        <svg id="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        <svg id="sun-icon" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+    </button>
+
+    <div id="app-container">
+        
+        <div id="screen-login" class="screen active">
+            <h1>Willkommen</h1>
+            <p class="subtitle">Bitte gib deine Teilnehmer-ID ein, um zu beginnen.</p>
+            <input type="text" id="participant-id" placeholder="Participant ID" autocomplete="off">
+            <button id="btn-login" class="primary-btn">Anmelden</button>
+            <div class="admin-section">
+                <button id="btn-export" class="text-btn">Lokales Backup exportieren (CSV)</button>
+            </div>
+        </div>
+
+        <div id="screen-menu" class="screen hidden">
+            <h1>Testauswahl</h1>
+            <p class="subtitle">Eingeloggt als: <strong id="display-id"></strong></p>
+            <button id="btn-pre-test" class="primary-btn">Pre-Test starten</button>
+            <button id="btn-post-test" class="primary-btn secondary">Post-Test starten</button>
+            <button id="btn-logout" class="text-btn">Abmelden</button>
+        </div>
+
+        <div id="screen-instructions" class="screen hidden">
+            <h1>Instruktionen</h1>
+            <div class="card">
+                <p>In der folgenden Aufgabe geht es darum, verschiedene Zeitintervalle möglichst genau einzuschätzen.</p>
+                <p><strong>WICHTIG:</strong> Bitte zähle im Kopf <strong>nicht</strong> mit (z.B. "Einundzwanzig, Zweiundzwanzig..."). Versuche stattdessen, dich ausschließlich auf dein rein subjektives Zeitgefühl zu verlassen.</p>
+            </div>
+            <button id="btn-start-calibration" class="primary-btn">Weiter zur Kalibrierung</button>
+        </div>
+
+        <div id="screen-calibration" class="screen hidden">
+            <h1>Kalibrierung</h1>
+            <p class="subtitle" id="calib-subtitle">Präge dir die Zeitdauer von exakt 24 Sekunden ein (Durchgang 1/2).</p>
+            <div class="progress-container">
+                <div id="calib-progress" class="progress-bar"></div>
+            </div>
+            <button id="btn-run-calibration" class="primary-btn">24s starten</button>
+            <button id="btn-next-calibration" class="primary-btn hidden">Weiter</button>
+        </div>
+
+        <div id="screen-test" class="screen hidden">
+            <h1 id="test-title">Übungsphase</h1>
+            <p class="subtitle" id="test-subtitle">Durchgang 1</p>
+            
+            <div class="target-time-display">
+                Zielzeit: <strong id="target-duration">0</strong> Sekunden
+            </div>
+
+            <div class="action-area">
+                <button id="btn-action" class="action-btn start">Start</button>
+            </div>
+
+            <div id="feedback-area" class="feedback-area hidden">
+                <p>Gestoppte Zeit:</p>
+                <h2 id="feedback-time">0.00 s</h2>
+            </div>
+
+            <button id="btn-next-trial" class="primary-btn hidden">Weiter</button>
+        </div>
+
+        <div id="screen-transition" class="screen hidden">
+            <h1>Haupttest</h1>
+            <div class="card">
+                <p>Die Übungsphase ist beendet. Ab jetzt beginnt der Haupttest.</p>
+                <p><strong>Hinweis:</strong> Ab jetzt erhältst du nach dem Stoppen <strong>kein Feedback</strong> mehr über die tatsächlich gestoppte Zeit.</p>
+            </div>
+            <button id="btn-start-main" class="primary-btn">Haupttest starten</button>
+        </div>
+
+        <div id="screen-done" class="screen hidden">
+            <h1>Test Abgeschlossen</h1>
+            <p class="subtitle">Vielen Dank! Deine Daten wurden sicher in der Cloud gespeichert.</p>
+            <button id="btn-back-menu" class="primary-btn">Zurück zum Menü</button>
+        </div>
+
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
