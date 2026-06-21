@@ -1,7 +1,7 @@
 // ==========================================
 // KONFIGURATION: HIER DEINE GOOGLE URL REIN!
 // ==========================================
-const GOOGLE_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbxkRc12r7jcM2F2Zc8BVo6DPO1PnMMV7PLkyCuRwGTrVwxW8-bCZkiLhUn4XtCJqrrd-A/exec';
+const GOOGLE_WEBHOOK_URL = 'DEINE_WEB_APP_URL_HIER_EINFUEGEN';
 
 // --- State Management ---
 const STATE_KEY = 'timePerceptionState';
@@ -16,6 +16,11 @@ let state = {
     currentTrialIndex: 0,
     startTime: 0
 };
+
+// --- Sicherheits-Locks für den Timer ---
+// Verhindert mehrfaches Klicken (Ghost-Clicks) auf Touchscreens
+let isTimerRunning = false;
+let isTrialFinished = false;
 
 // --- Helper Functions ---
 function shuffleArray(array) {
@@ -135,17 +140,33 @@ function attachEventListeners() {
     const btnAction = document.getElementById('btn-action');
     const btnNextTrial = document.getElementById('btn-next-trial');
     
+    // DIE REPARIERTE TIMER-LOGIK
     btnAction.addEventListener('click', () => {
-        if (btnAction.classList.contains('start')) {
+        // 1. Harter Block: Wenn der Durchgang beendet ist, ignoriere alle weiteren Klicks
+        if (isTrialFinished) return;
+
+        if (!isTimerRunning) {
+            // TIMER STARTEN
             state.startTime = performance.now();
+            isTimerRunning = true;
+            
             btnAction.classList.remove('start');
             btnAction.classList.add('stop');
             btnAction.textContent = 'Stop';
         } else {
+            // TIMER STOPPEN
             const endTime = performance.now();
+            
+            // 2. Sofortige Sperre aktivieren
+            isTimerRunning = false;
+            isTrialFinished = true; 
+            
+            // Button sofort deaktivieren und verstecken
+            btnAction.disabled = true;
+            btnAction.classList.add('hidden');
+
             const durationSec = (endTime - state.startTime) / 1000;
             const targetSec = state.trials[state.currentTrialIndex];
-            btnAction.classList.add('hidden');
             
             const result = {
                 participantId: state.participantId,
@@ -181,6 +202,7 @@ function attachEventListeners() {
     document.getElementById('btn-export').addEventListener('click', exportCSV);
 }
 
+// --- Ablauf-Setup Funktionen ---
 function prepareCalibrationScreen() {
     document.getElementById('btn-run-calibration').classList.remove('hidden');
     document.getElementById('btn-run-calibration').disabled = false;
@@ -217,11 +239,18 @@ function setupNextTrial() {
     document.getElementById('test-subtitle').textContent = `Durchgang ${state.currentTrialIndex + 1} von ${state.trials.length}`;
     document.getElementById('target-duration').textContent = state.trials[state.currentTrialIndex];
     
+    // UI und Timer-Locks für den neuen Durchgang komplett zurücksetzen
+    isTimerRunning = false;
+    isTrialFinished = false;
+    
     const btnAction = document.getElementById('btn-action');
+    btnAction.disabled = false;
     btnAction.classList.remove('hidden', 'stop');
     btnAction.classList.add('start');
     btnAction.textContent = 'Start';
     
+    // Altes Feedback rigoros leeren und verstecken
+    document.getElementById('feedback-time').textContent = '0.00 s';
     document.getElementById('feedback-area').classList.add('hidden');
     document.getElementById('btn-next-trial').classList.add('hidden');
 }
