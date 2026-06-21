@@ -1,7 +1,7 @@
 // ==========================================
 // KONFIGURATION: HIER DEINE GOOGLE URL REIN!
 // ==========================================
-const GOOGLE_WEBHOOK_URL = 'DEINE_WEB_APP_URL_HIER_EINFUEGEN';
+const GOOGLE_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbxkRc12r7jcM2F2Zc8BVo6DPO1PnMMV7PLkyCuRwGTrVwxW8-bCZkiLhUn4XtCJqrrd-A/exec';
 
 // --- State Management ---
 const STATE_KEY = 'timePerceptionState';
@@ -18,7 +18,6 @@ let state = {
 };
 
 // --- Sicherheits-Locks für den Timer ---
-// Verhindert mehrfaches Klicken (Ghost-Clicks) auf Touchscreens
 let isTimerRunning = false;
 let isTrialFinished = false;
 
@@ -140,9 +139,8 @@ function attachEventListeners() {
     const btnAction = document.getElementById('btn-action');
     const btnNextTrial = document.getElementById('btn-next-trial');
     
-    // DIE REPARIERTE TIMER-LOGIK
     btnAction.addEventListener('click', () => {
-        // 1. Harter Block: Wenn der Durchgang beendet ist, ignoriere alle weiteren Klicks
+        // Harter Block: Wenn der Durchgang beendet ist, ignoriere alle weiteren Klicks
         if (isTrialFinished) return;
 
         if (!isTimerRunning) {
@@ -157,13 +155,15 @@ function attachEventListeners() {
             // TIMER STOPPEN
             const endTime = performance.now();
             
-            // 2. Sofortige Sperre aktivieren
+            // Sperre sofort aktivieren
             isTimerRunning = false;
             isTrialFinished = true; 
             
-            // Button sofort deaktivieren und verstecken
+            // Button verwandelt sich in blauen Haken
+            btnAction.classList.remove('stop');
+            btnAction.classList.add('success');
+            btnAction.innerHTML = '&#10003;'; // HTML Code für einen Haken (✓)
             btnAction.disabled = true;
-            btnAction.classList.add('hidden');
 
             const durationSec = (endTime - state.startTime) / 1000;
             const targetSec = state.trials[state.currentTrialIndex];
@@ -179,10 +179,16 @@ function attachEventListeners() {
 
             saveResult(result);
 
+            // Striktes Feedback-Management
             if (state.isPractice) {
                 document.getElementById('feedback-time').textContent = durationSec.toFixed(2) + ' s';
                 document.getElementById('feedback-area').classList.remove('hidden');
+            } else {
+                // Im Haupttest strikt sicherstellen, dass nichts angezeigt wird
+                document.getElementById('feedback-time').textContent = '';
+                document.getElementById('feedback-area').classList.add('hidden');
             }
+            
             btnNextTrial.classList.remove('hidden');
         }
     });
@@ -245,12 +251,12 @@ function setupNextTrial() {
     
     const btnAction = document.getElementById('btn-action');
     btnAction.disabled = false;
-    btnAction.classList.remove('hidden', 'stop');
+    btnAction.classList.remove('hidden', 'stop', 'success');
     btnAction.classList.add('start');
-    btnAction.textContent = 'Start';
+    btnAction.textContent = 'Start'; // Text wieder auf Start setzen, Haken überschreiben
     
     // Altes Feedback rigoros leeren und verstecken
-    document.getElementById('feedback-time').textContent = '0.00 s';
+    document.getElementById('feedback-time').textContent = '';
     document.getElementById('feedback-area').classList.add('hidden');
     document.getElementById('btn-next-trial').classList.add('hidden');
 }
@@ -263,7 +269,7 @@ async function saveResult(result) {
     localStorage.setItem(RESULTS_KEY, JSON.stringify(results));
 
     // 2. An Google senden
-    if(GOOGLE_WEBHOOK_URL !== 'DEINE_WEB_APP_URL_HIER_EINFUEGEN') {
+    if(GOOGLE_WEBHOOK_URL !== 'https://script.google.com/macros/s/AKfycbxkRc12r7jcM2F2Zc8BVo6DPO1PnMMV7PLkyCuRwGTrVwxW8-bCZkiLhUn4XtCJqrrd-A/exec') {
         try {
             await fetch(GOOGLE_WEBHOOK_URL, {
                 method: 'POST',

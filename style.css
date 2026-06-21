@@ -80,9 +80,10 @@ button { font-family: inherit; cursor: pointer; border: none; outline: none; tra
 
 /* Big Action Button (Start/Stop) */
 .action-area { margin: 40px 0; display: flex; justify-content: center; }
-.action-btn { width: 180px; height: 180px; border-radius: 50%; font-size: 28px; font-weight: 700; color: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+.action-btn { width: 180px; height: 180px; border-radius: 50%; font-size: 28px; font-weight: 700; color: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.15); transition: background-color 0.2s ease; }
 .action-btn.start { background-color: var(--action-start); }
 .action-btn.stop { background-color: var(--action-stop); }
+.action-btn.success { background-color: var(--btn-primary); cursor: default; font-size: 48px; }
 
 /* Feedback Area */
 .feedback-area { text-align: center; margin-bottom: 32px; animation: fadeIn 0.4s ease; }
