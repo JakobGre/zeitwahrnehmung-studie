@@ -310,8 +310,8 @@ function exportWideCSV() {
         const e18 = pad(g.estimates[18]);
         const e24 = pad(g.estimates[24]);
 
-        // Punkt durch Komma ersetzen für deutsches Excel
-        const fmt = (val) => val !== '' ? String(val).replace('.', ',') : '';
+        // Punkt durch Komma ersetzen und in Anführungszeichen setzen für deutsches Excel
+const fmt = (val) => val !== '' ? '"' + String(val).replace('.', ',') + '"' : '';
 
         const row = [
             g.participantId, '', '', '', '', '', 
