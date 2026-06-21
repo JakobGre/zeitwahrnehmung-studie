@@ -276,13 +276,15 @@ function exportWideCSV() {
                 participantId: r.participantId,
                 condition: r.condition,
                 timepoint: r.testPhase,
-                errors: { 6: [], 12: [], 18: [], 24: [] }
+                // Intern in "estimates" umbenannt für mehr Klarheit
+                estimates: { 6: [], 12: [], 18: [], 24: [] } 
             };
         }
-        groups[key].errors[r.targetDuration].push(r.errorMargin);
+        // HIER IST DIE ÄNDERUNG: Wir pushen r.estimatedDuration statt r.errorMargin
+        groups[key].estimates[r.targetDuration].push(r.estimatedDuration);
     });
 
-    // Header für 6 Durchgänge generieren
+    // Header (Namen bleiben identisch zur Original-Vorlage, damit Excel nicht meckert)
     const headers = [
         'participant_id', 'Name', 'height_cm', 'body_mass_kg', 'licensed_experience_years', 'weekly_training_sessions', 
         'condition', 'timepoint', 
@@ -303,10 +305,10 @@ function exportWideCSV() {
             return res.slice(0, 6);
         };
 
-        const e6 = pad(g.errors[6]);
-        const e12 = pad(g.errors[12]);
-        const e18 = pad(g.errors[18]);
-        const e24 = pad(g.errors[24]);
+        const e6 = pad(g.estimates[6]);
+        const e12 = pad(g.estimates[12]);
+        const e18 = pad(g.estimates[18]);
+        const e24 = pad(g.estimates[24]);
 
         // Punkt durch Komma ersetzen für deutsches Excel
         const fmt = (val) => val !== '' ? String(val).replace('.', ',') : '';
