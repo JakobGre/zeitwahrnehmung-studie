@@ -1,15 +1,11 @@
-// ==========================================
-// KONFIGURATION: HIER DEINE GOOGLE URL REIN!
-// ==========================================
-const GOOGLE_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbxkRc12r7jcM2F2Zc8BVo6DPO1PnMMV7PLkyCuRwGTrVwxW8-bCZkiLhUn4XtCJqrrd-A/exec';
-
 // --- State Management ---
 const STATE_KEY = 'timePerceptionState';
 const RESULTS_KEY = 'timePerceptionResults';
 
 let state = {
     participantId: null,
-    currentPhase: null, // 'pre' or 'post'
+    condition: 'mental', // 'mental' oder 'physical'
+    currentPhase: null, // 'pre' oder 'post'
     calibrationRun: 1,
     isPractice: true,
     trials: [], 
@@ -96,6 +92,7 @@ function attachEventListeners() {
     });
 
     const startPhase = (phase) => {
+        state.condition = document.getElementById('condition-select').value;
         state.currentPhase = phase;
         state.isPractice = true;
         state.calibrationRun = 1;
@@ -140,11 +137,9 @@ function attachEventListeners() {
     const btnNextTrial = document.getElementById('btn-next-trial');
     
     btnAction.addEventListener('click', () => {
-        // Harter Block: Wenn der Durchgang beendet ist, ignoriere alle weiteren Klicks
         if (isTrialFinished) return;
 
         if (!isTimerRunning) {
-            // TIMER STARTEN
             state.startTime = performance.now();
             isTimerRunning = true;
             
@@ -152,17 +147,14 @@ function attachEventListeners() {
             btnAction.classList.add('stop');
             btnAction.textContent = 'Stop';
         } else {
-            // TIMER STOPPEN
             const endTime = performance.now();
             
-            // Sperre sofort aktivieren
             isTimerRunning = false;
             isTrialFinished = true; 
             
-            // Button verwandelt sich in blauen Haken
             btnAction.classList.remove('stop');
             btnAction.classList.add('success');
-            btnAction.innerHTML = '&#10003;'; // HTML Code für einen Haken (✓)
+            btnAction.innerHTML = '&#10003;'; 
             btnAction.disabled = true;
 
             const durationSec = (endTime - state.startTime) / 1000;
@@ -170,6 +162,7 @@ function attachEventListeners() {
             
             const result = {
                 participantId: state.participantId,
+                condition: state.condition,
                 testPhase: state.currentPhase,
                 isPractice: state.isPractice,
                 targetDuration: targetSec,
@@ -179,12 +172,10 @@ function attachEventListeners() {
 
             saveResult(result);
 
-            // Striktes Feedback-Management
             if (state.isPractice) {
                 document.getElementById('feedback-time').textContent = durationSec.toFixed(2) + ' s';
                 document.getElementById('feedback-area').classList.remove('hidden');
             } else {
-                // Im Haupttest strikt sicherstellen, dass nichts angezeigt wird
                 document.getElementById('feedback-time').textContent = '';
                 document.getElementById('feedback-area').classList.add('hidden');
             }
@@ -205,10 +196,12 @@ function attachEventListeners() {
 
     document.getElementById('btn-start-main').addEventListener('click', () => startMainPhase());
     document.getElementById('btn-back-menu').addEventListener('click', () => showScreen('screen-menu'));
-    document.getElementById('btn-export').addEventListener('click', exportCSV);
+    
+    // Export Buttons
+    document.getElementById('btn-download-final').addEventListener('click', exportWideCSV);
+    document.getElementById('btn-export-admin').addEventListener('click', exportWideCSV);
 }
 
-// --- Ablauf-Setup Funktionen ---
 function prepareCalibrationScreen() {
     document.getElementById('btn-run-calibration').classList.remove('hidden');
     document.getElementById('btn-run-calibration').disabled = false;
@@ -245,7 +238,6 @@ function setupNextTrial() {
     document.getElementById('test-subtitle').textContent = `Durchgang ${state.currentTrialIndex + 1} von ${state.trials.length}`;
     document.getElementById('target-duration').textContent = state.trials[state.currentTrialIndex];
     
-    // UI und Timer-Locks für den neuen Durchgang komplett zurücksetzen
     isTimerRunning = false;
     isTrialFinished = false;
     
@@ -253,44 +245,94 @@ function setupNextTrial() {
     btnAction.disabled = false;
     btnAction.classList.remove('hidden', 'stop', 'success');
     btnAction.classList.add('start');
-    btnAction.textContent = 'Start'; // Text wieder auf Start setzen, Haken überschreiben
+    btnAction.textContent = 'Start';
     
-    // Altes Feedback rigoros leeren und verstecken
     document.getElementById('feedback-time').textContent = '';
     document.getElementById('feedback-area').classList.add('hidden');
     document.getElementById('btn-next-trial').classList.add('hidden');
 }
 
-// --- Cloud-Export (Google Sheets) & Lokales Backup ---
-async function saveResult(result) {
-    // 1. Offline Backup
+// --- Datenspeicherung ---
+function saveResult(result) {
     let results = JSON.parse(localStorage.getItem(RESULTS_KEY) || '[]');
     results.push(result);
     localStorage.setItem(RESULTS_KEY, JSON.stringify(results));
-
-    // 2. An Google senden
-    if(GOOGLE_WEBHOOK_URL !== 'https://script.google.com/macros/s/AKfycbxkRc12r7jcM2F2Zc8BVo6DPO1PnMMV7PLkyCuRwGTrVwxW8-bCZkiLhUn4XtCJqrrd-A/exec') {
-        try {
-            await fetch(GOOGLE_WEBHOOK_URL, {
-                method: 'POST',
-                body: JSON.stringify(result)
-            });
-            console.log('Daten an Google Sheets gesendet.');
-        } catch (error) {
-            console.error('Fehler beim Senden an Google:', error);
-        }
-    }
 }
 
-function exportCSV() {
+// --- CSV Formatierung (Wide-Format nach Excel-Vorlage) ---
+function exportWideCSV() {
     const results = JSON.parse(localStorage.getItem(RESULTS_KEY) || '[]');
     if (results.length === 0) return alert('Noch keine Daten vorhanden.');
-    const headers = ['Participant_ID', 'Test_Phase', 'Is_Practice', 'Target_Duration', 'Estimated_Duration', 'Error_Margin'];
-    const rows = results.map(r => [r.participantId, r.testPhase, r.isPractice, r.targetDuration, r.estimatedDuration, r.errorMargin].join(','));
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows].join('\n');
+
+    // Nur Daten aus dem Haupttest verwenden
+    const mainResults = results.filter(r => !r.isPractice);
+    
+    // Daten nach Participant, Condition und Phase gruppieren
+    const groups = {};
+    mainResults.forEach(r => {
+        const key = `${r.participantId}_${r.condition}_${r.testPhase}`;
+        if (!groups[key]) {
+            groups[key] = {
+                participantId: r.participantId,
+                condition: r.condition,
+                timepoint: r.testPhase,
+                errors: { 6: [], 12: [], 18: [], 24: [] }
+            };
+        }
+        groups[key].errors[r.targetDuration].push(r.errorMargin);
+    });
+
+    // Header für 6 Durchgänge generieren
+    const headers = [
+        'participant_id', 'Name', 'height_cm', 'body_mass_kg', 'licensed_experience_years', 'weekly_training_sessions', 
+        'condition', 'timepoint', 
+        'duration_s', 'trial_1_error', 'trial_2_error', 'trial_3_error', 'trial_4_error', 'trial_5_error', 'trial_6_error',
+        'duration_s', 'trial_1_error', 'trial_2_error', 'trial_3_error', 'trial_4_error', 'trial_5_error', 'trial_6_error',
+        'duration_s', 'trial_1_error', 'trial_2_error', 'trial_3_error', 'trial_4_error', 'trial_5_error', 'trial_6_error',
+        'duration_s', 'trial_1_error', 'trial_2_error', 'trial_3_error', 'trial_4_error', 'trial_5_error', 'trial_6_error',
+        'notes'
+    ];
+
+    let csvRows = [headers.join(',')];
+
+    Object.values(groups).forEach(g => {
+        // Auffüllen auf exakt 6 Werte, falls etwas fehlt
+        const pad = (arr) => {
+            let res = [...arr];
+            while(res.length < 6) res.push('');
+            return res.slice(0, 6);
+        };
+
+        const e6 = pad(g.errors[6]);
+        const e12 = pad(g.errors[12]);
+        const e18 = pad(g.errors[18]);
+        const e24 = pad(g.errors[24]);
+
+        // Punkt durch Komma ersetzen für deutsches Excel
+        const fmt = (val) => val !== '' ? String(val).replace('.', ',') : '';
+
+        const row = [
+            g.participantId, '', '', '', '', '', 
+            g.condition, g.timepoint,
+            6, fmt(e6[0]), fmt(e6[1]), fmt(e6[2]), fmt(e6[3]), fmt(e6[4]), fmt(e6[5]),
+            12, fmt(e12[0]), fmt(e12[1]), fmt(e12[2]), fmt(e12[3]), fmt(e12[4]), fmt(e12[5]),
+            18, fmt(e18[0]), fmt(e18[1]), fmt(e18[2]), fmt(e18[3]), fmt(e18[4]), fmt(e18[5]),
+            24, fmt(e24[0]), fmt(e24[1]), fmt(e24[2]), fmt(e24[3]), fmt(e24[4]), fmt(e24[5]),
+            ''
+        ];
+        csvRows.push(row.join(','));
+    });
+
+    const csvContent = "data:text/csv;charset=utf-8," + csvRows.join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `time_perception_backup_${new Date().toISOString().slice(0,10)}.csv`);
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    
+    // Benennung der Datei für leichte Zuordnung
+    const fileName = state.participantId ? `Ergebnisse_${state.participantId}_${state.condition}_${state.currentPhase}.csv` : 'Ergebnisse_Zeitwahrnehmung.csv';
+    link.setAttribute("download", fileName);
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }

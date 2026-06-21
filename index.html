@@ -20,13 +20,22 @@
             <input type="text" id="participant-id" placeholder="Participant ID" autocomplete="off">
             <button id="btn-login" class="primary-btn">Anmelden</button>
             <div class="admin-section">
-                <button id="btn-export" class="text-btn">Lokales Backup exportieren (CSV)</button>
+                <button id="btn-export-admin" class="text-btn">Alle Daten exportieren (Admin)</button>
             </div>
         </div>
 
         <div id="screen-menu" class="screen hidden">
             <h1>Testauswahl</h1>
             <p class="subtitle">Eingeloggt als: <strong id="display-id"></strong></p>
+            
+            <div class="card" style="padding: 16px; margin-bottom: 24px;">
+                <p style="font-size: 14px; font-weight: bold; margin-bottom: 8px;">1. Bedingung wählen:</p>
+                <select id="condition-select" class="input-select">
+                    <option value="mental">Mentale Ermüdung (Stroop)</option>
+                    <option value="physical">Physische Ermüdung (Plyometrisch)</option>
+                </select>
+            </div>
+
             <button id="btn-pre-test" class="primary-btn">Pre-Test starten</button>
             <button id="btn-post-test" class="primary-btn secondary">Post-Test starten</button>
             <button id="btn-logout" class="text-btn">Abmelden</button>
@@ -82,8 +91,16 @@
 
         <div id="screen-done" class="screen hidden">
             <h1>Test Abgeschlossen</h1>
-            <p class="subtitle">Vielen Dank! Deine Daten wurden sicher gespeichert.</p>
-            <button id="btn-back-menu" class="primary-btn">Zurück zum Menü</button>
+            <p class="subtitle">Vielen Dank! Bitte lade deine Daten herunter und sende sie an den Versuchsleiter.</p>
+            
+            <button id="btn-download-final" class="primary-btn" style="background-color: #34c759;">1. Daten herunterladen</button>
+            
+            <a href="mailto:jakob.grempler.uni@gmail.com?subject=Ergebnisse%20Zeitwahrnehmung" id="btn-email-final" class="primary-btn secondary" style="text-decoration: none; text-align: center; display: block; line-height: 18px; padding-top: 18px;">
+                2. Datei per E-Mail senden
+            </a>
+            <p style="font-size: 13px; text-align: center; color: var(--text-secondary); margin-top: -8px; margin-bottom: 32px;">Wichtig: Hänge die Datei aus Schritt 1 manuell an die E-Mail an!</p>
+
+            <button id="btn-back-menu" class="text-btn" style="width: 100%;">Zurück zum Menü</button>
         </div>
 
     </div>
